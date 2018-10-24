@@ -94,3 +94,121 @@ dx, dgamma, dbeta = batchnorm_backward(dout, cache)
 print 'dx error: ', rel_error(dx_num, dx)
 print 'dgamma error: ', rel_error(da_num, dgamma)
 print 'dbeta error: ', rel_error(db_num, dbeta)
+#%%
+N, D, H1, H2, C = 2, 15, 20, 30, 10
+X = np.random.randn(N, D)
+y = np.random.randint(C, size=(N,))
+
+for reg in [0, 3.14]:
+  print 'Running check with reg = ', reg
+  model = FullyConnectedNet([H1, H2], input_dim=D, num_classes=C,
+                            reg=reg, weight_scale=5e-2, dtype=np.float64,
+                            use_batchnorm=True)
+
+  loss, grads = model.loss(X, y)
+  print 'Initial loss: ', loss
+
+  for name in sorted(grads):
+    f = lambda _: model.loss(X, y)[0]
+    grad_num = eval_numerical_gradient(f, model.params[name], verbose=False, h=1e-5)
+    print '%s relative error: %.2e' % (name, rel_error(grad_num, grads[name]))
+  if reg == 0: print
+# #%%
+# hidden_dims = [100, 100, 100, 100, 100]
+#
+# num_train = 1000
+# small_data = {
+#   'X_train': data['X_train'][:num_train],
+#   'y_train': data['y_train'][:num_train],
+#   'X_val': data['X_val'],
+#   'y_val': data['y_val'],
+# }
+#
+# weight_scale = 2e-2
+# bn_model = FullyConnectedNet(hidden_dims, weight_scale=weight_scale, use_batchnorm=True)
+# model = FullyConnectedNet(hidden_dims, weight_scale=weight_scale, use_batchnorm=False)
+#
+# bn_solver = Solver(bn_model, small_data,
+#                 num_epochs=10, batch_size=50,
+#                 update_rule='adam',
+#                 optim_config={
+#                   'learning_rate': 1e-3,
+#                 },
+#                 verbose=True, print_every=200)
+# bn_solver.train()
+#
+# solver = Solver(model, small_data,
+#                 num_epochs=10, batch_size=50,
+#                 update_rule='adam',
+#                 optim_config={
+#                   'learning_rate': 1e-3,
+#                 },
+#                 verbose=True, print_every=200)
+# solver.train()
+# #%%
+# plt.subplot(3, 1, 1)
+# plt.title('Training loss')
+# plt.xlabel('Iteration')
+#
+# plt.subplot(3, 1, 2)
+# plt.title('Training accuracy')
+# plt.xlabel('Epoch')
+#
+# plt.subplot(3, 1, 3)
+# plt.title('Validation accuracy')
+# plt.xlabel('Epoch')
+#
+# plt.subplot(3, 1, 1)
+# plt.plot(solver.loss_history, 'o', label='baseline')
+# plt.plot(bn_solver.loss_history, 'o', label='batchnorm')
+#
+# plt.subplot(3, 1, 2)
+# plt.plot(solver.train_acc_history, '-o', label='baseline')
+# plt.plot(bn_solver.train_acc_history, '-o', label='batchnorm')
+#
+# plt.subplot(3, 1, 3)
+# plt.plot(solver.val_acc_history, '-o', label='baseline')
+# plt.plot(bn_solver.val_acc_history, '-o', label='batchnorm')
+#
+# for i in [1, 2, 3]:
+#   plt.subplot(3, 1, i)
+#   plt.legend(loc='upper center', ncol=4)
+# plt.gcf().set_size_inches(15, 15)
+# plt.show()
+#%%
+hidden_dims = [50, 50, 50, 50, 50, 50, 50]
+
+num_train = 1000
+small_data = {
+  'X_train': data['X_train'][:num_train],
+  'y_train': data['y_train'][:num_train],
+  'X_val': data['X_val'],
+  'y_val': data['y_val'],
+}
+
+bn_solvers = {}
+solvers = {}
+weight_scales = np.logspace(-4, 0, num=20)
+for i, weight_scale in enumerate(weight_scales):
+  print 'Running weight scale %d / %d' % (i + 1, len(weight_scales))
+  bn_model = FullyConnectedNet(hidden_dims, weight_scale=weight_scale, use_batchnorm=True)
+  model = FullyConnectedNet(hidden_dims, weight_scale=weight_scale, use_batchnorm=False)
+
+  bn_solver = Solver(bn_model, small_data,
+                  num_epochs=10, batch_size=50,
+                  update_rule='adam',
+                  optim_config={
+                    'learning_rate': 1e-3,
+                  },
+                  verbose=False, print_every=200)
+  bn_solver.train()
+  bn_solvers[weight_scale] = bn_solver
+  solver = Solver(model, small_data,
+                  num_epochs=10, batch_size=50,
+                  update_rule='adam',
+                  optim_config={
+                    'learning_rate': 1e-3,
+                  },
+                  verbose=False, print_every=200)
+  solver.train()
+  solvers[weight_scale] = solver

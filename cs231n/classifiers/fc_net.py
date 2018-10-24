@@ -184,6 +184,8 @@ class FullyConnectedNet(object):
     for num,i in enumerate(tmp[1:],1):
       self.params["W%s"%num]=np.random.randn(tmp[num-1],tmp[num])*weight_scale
       self.params["b%s"%num]=np.zeros(i)
+      if num==self.num_layers:
+        continue
       if use_batchnorm:
         self.params["gamma%s"%num]=np.ones(i)
         self.params["beta%s"%num]=np.zeros(i)
@@ -219,13 +221,22 @@ class FullyConnectedNet(object):
     # Cast all parameters to the correct datatype
     for k, v in self.params.iteritems():
       self.params[k] = v.astype(dtype)
-
-
+  def affine_batch_relu_forward(self,x,w,b,gamma,beta,bn_parma):
+    fx,affine_cache=affine_forward(x,w,b)
+    bx,batch_cache=batchnorm_forward(fx,gamma,beta,bn_parma)
+    out,relu_cache=relu_forward(bx)
+    return out,(affine_cache,batch_cache,relu_cache)
+  def affine_batch_relu_backward(self,dout,cache):
+    affine_cache,batch_cache,relu_cache=cache
+    dout=relu_backward(dout,relu_cache)
+    dout,dgamma,dbeta=batchnorm_backward(dout,batch_cache)
+    dout,dw,db=affine_backward(dout,affine_cache)
+    return dout,dw,db,dgamma,dbeta
   def loss(self, X, y=None):
     """
     Compute loss and gradient for the fully-connected net.
 
-    Input / output: Same as TwoLayerNet above.
+    Input / output: Same as TwoLayerNet above.sigmoid
     """
     X = X.astype(self.dtype)
     mode = 'test' if y is None else 'train'
@@ -236,11 +247,11 @@ class FullyConnectedNet(object):
       self.dropout_param['mode'] = mode   
     if self.use_batchnorm:
       for bn_param in self.bn_params:
-        bn_param[mode] = mode
+        bn_param['mode'] = mode
 
     scores = None
     ############################################################################
-    # TODO: Implement the forward pass for the fully-connected net, computing  #
+    # TODO: Implement the forward pass for the fully-connected net, computin g  #
     # the class scores for X and storing them in the scores variable.          #
     #                                                                          #
     # When using dropout, you'll need to pass self.dropout_param to each       #
@@ -259,7 +270,10 @@ class FullyConnectedNet(object):
         out_tmp,n=affine_relu_forward(out_tmp,self.params["W%s"%i],self.params["b%s"%i])
         cache_list.append(n)
         plt_list.append(out_tmp)
-
+    else:
+      for i in xrange(1,self.num_layers):
+        out_tmp,n=self.affine_batch_relu_forward(out_tmp,self.params["W%s"%i],self.params["b%s"%i],self.params["gamma%s"%i],self.params["beta%s"%i],self.bn_params[i-1])
+        cache_list.append(n)
     final_out,final_cache=affine_forward(out_tmp,self.params["W%s"%self.num_layers],self.params["b%s"%self.num_layers])
     plt_list.append(final_out)
     # for n, i in enumerate(plt_list):
@@ -274,7 +288,7 @@ class FullyConnectedNet(object):
     second_cache_list=[]
     ############################################################################
     #                             END OF YOUR CODE                             #
-    ############################################################################
+    ######################################## ################## ##################
 
     # If test mode return early
     if mode == 'test':
@@ -302,10 +316,18 @@ class FullyConnectedNet(object):
     dx,dw,db=affine_backward(dx,cache_list.pop())
     grads["W%s"%self.num_layers]=dw+self.reg*self.params["W%s"%self.num_layers]
     grads["b%s"%self.num_layers]=db
-    for i in range(self.num_layers-1,0,-1):
-      dx,dw,db=affine_relu_backward(dx,cache_list.pop())
-      grads["W%s"%i]=dw+self.reg*self.params["W%s"%i]
-      grads["b%s"%i]=db
+    if not self.use_batchnorm:
+      for i in range(self.num_layers-1,0,-1):
+        dx,dw,db=affine_relu_backward(dx,cache_list.pop())
+        grads["W%s"%i]=dw+self.reg*self.params["W%s"%i]
+        grads["b%s"%i]=db
+    else:
+      for i in range(self.num_layers-1,0,-1):
+        dx,dw,db,dgamma,dbeta=self.affine_batch_relu_backward(dx,cache_list.pop())
+        grads["W%s"%i]=dw+self.reg*self.params["W%s"%i]
+        grads["b%s"%i]=db
+        grads['gamma%s'%i]=dgamma
+        grads['beta%s'%i]=dbeta
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
