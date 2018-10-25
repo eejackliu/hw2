@@ -175,7 +175,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     x_oragin=x
     mean=np.mean(x,axis=0)
     var=np.var(x,axis=0)
-    std=np.sqrt(var+eps)
+    std=np.sqrt(var)
     running_mean=running_mean*momentum+(1-momentum)*mean
     running_var=running_var*momentum+(1-momentum)*std
     x=(x-mean)/std
@@ -379,7 +379,12 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  pass
+  x=np.pad(x,1,'constant')
+  f,c,kh,kw=w.shape
+  n,c,h,w=x.shape
+  new_h,new_w=int((h-kh)/float(conv_param['stride'])),int((w-kw)/float(conv_param['stride']))
+  w_matrix=w.reshape(f,c*kh*kw)
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

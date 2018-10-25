@@ -265,15 +265,21 @@ class FullyConnectedNet(object):
     cache_list=[]
     out_tmp=X
     plt_list=[]
-    if not self.use_batchnorm:
-      for i in xrange(1,self.num_layers):
+
+    for i in xrange(1,self.num_layers):
+      if not self.use_batchnorm:
         out_tmp,n=affine_relu_forward(out_tmp,self.params["W%s"%i],self.params["b%s"%i])
-        cache_list.append(n)
-        plt_list.append(out_tmp)
-    else:
-      for i in xrange(1,self.num_layers):
+      else:
         out_tmp,n=self.affine_batch_relu_forward(out_tmp,self.params["W%s"%i],self.params["b%s"%i],self.params["gamma%s"%i],self.params["beta%s"%i],self.bn_params[i-1])
+      cache_list.append(n)
+      if self.use_dropout:
+        out_tmp,n=dropout_forward(out_tmp,self.dropout_param)
         cache_list.append(n)
+
+
+
+        # plt_list.append(out_tmp)
+
     final_out,final_cache=affine_forward(out_tmp,self.params["W%s"%self.num_layers],self.params["b%s"%self.num_layers])
     plt_list.append(final_out)
     # for n, i in enumerate(plt_list):
@@ -316,13 +322,15 @@ class FullyConnectedNet(object):
     dx,dw,db=affine_backward(dx,cache_list.pop())
     grads["W%s"%self.num_layers]=dw+self.reg*self.params["W%s"%self.num_layers]
     grads["b%s"%self.num_layers]=db
-    if not self.use_batchnorm:
-      for i in range(self.num_layers-1,0,-1):
+
+    for i in range(self.num_layers-1,0,-1):
+      if self.use_dropout:
+        dx=dropout_backward(dx,cache_list.pop())
+      if not self.use_batchnorm:
         dx,dw,db=affine_relu_backward(dx,cache_list.pop())
         grads["W%s"%i]=dw+self.reg*self.params["W%s"%i]
         grads["b%s"%i]=db
-    else:
-      for i in range(self.num_layers-1,0,-1):
+      else:
         dx,dw,db,dgamma,dbeta=self.affine_batch_relu_backward(dx,cache_list.pop())
         grads["W%s"%i]=dw+self.reg*self.params["W%s"%i]
         grads["b%s"%i]=db
