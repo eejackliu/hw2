@@ -379,11 +379,23 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  x=np.pad(x,1,'constant')
+  x_pad=np.pad(x,conv_param['pad'],'constant')[1:-1,1:-1,:,:]
   f,c,kh,kw=w.shape
-  n,c,h,w=x.shape
-  new_h,new_w=int((h-kh)/float(conv_param['stride'])),int((w-kw)/float(conv_param['stride']))
-  w_matrix=w.reshape(f,c*kh*kw)
+  n,c,H,W=x_pad.shape
+  new_h,new_w=int((H-kh)/float(conv_param['stride']))+1,int((W-kw)/float(conv_param['stride']))+1
+  w_matrix=w.reshape(-1,c*kh*kw)
+  out=np.zeros([n,f,new_h,new_w])
+  for i in range(new_h):
+    for j in range(new_w):
+      x_n=x_pad[:,:,i*conv_param['stride']:i*conv_param['stride']+kh,j*conv_param['stride']:j*conv_param['stride']+kw]
+      x_n=x_n.reshape(-1,c*kh*kw).T
+      tmp=np.dot(w_matrix,x_n)+b[:,None]
+      out[:,:,i,j]=tmp.T
+
+  # out=np.zeros([f,new_h,new_w])
+  # for m in range(f):
+  #   w_matrix=w[m].reshape[]
+
 
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -409,7 +421,34 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
-  pass
+  x,w,b,conv_param=cache
+  n,f,nh,nw=dout.shape
+  f,c,kh,kw=w.shape
+  # n,c,H,W=x.shape
+  tmp=np.zeros(w.shape)
+  x_pad=np.pad(x,conv_param['pad'],'constant')[1:-1,1:-1,:,:]
+  dx=np.zeros(x_pad.shape)
+  dw=np.zeros([c*kh*kw,f])
+  db=np.zeros(f)
+  for i in range(nh):
+    for j in range(nw):
+      dout_tmp=np.squeeze(dout[:,:,i,j])#n,f
+      x_n=x_pad[:,:,i*conv_param['stride']:i*conv_param['stride']+kh,j*conv_param['stride']:j*conv_param['stride']+kw]#n,c
+      x_n=x_n.reshape(-1,c*kh*kw).T#n
+      w_matrix=w.reshape(-1,c*kh*kw).T#f
+      dx_tmp=np.dot(w_matrix,dout_tmp.T).reshape(c,kh,kw,-1)
+      dx_tmp=np.transpose(dx_tmp,(3,0,1,2))
+      dx[:,:,i*conv_param['stride']:i*conv_param['stride']+kh,j*conv_param['stride']:j*conv_param['stride']+kw]+=dx_tmp
+      dw+=np.dot(x_n,dout_tmp)
+      db+=np.sum(dout_tmp,axis=0)
+  dw=dw.reshape(-1,c,kh,kw)
+  dx=dx[:,:,1:-1,1:-1]
+  # dw=np.transpose(dw,(3,0,1,2))
+
+
+
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -420,7 +459,7 @@ def max_pool_forward_naive(x, pool_param):
   """
   A naive implementation of the forward pass for a max pooling layer.
 
-  Inputs:
+  Inputs:x_pad=np.pad(x,1,'constant')
   - x: Input data, of shape (N, C, H, W)
   - pool_param: dictionary with the following keys:
     - 'pool_height': The height of each pooling region
