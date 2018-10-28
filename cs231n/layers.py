@@ -191,7 +191,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # and shift the normalized data using gamma and beta. Store the result in   #
     # the out variable.                                                         #
     #############################################################################
-    x=(x-running_mean)/(running_var+eps)
+    x=(x-running_mean)/running_var
     out=gamma*x+beta
     #############################################################################
     #                             END OF YOUR CODE                              #
@@ -382,6 +382,8 @@ def conv_forward_naive(x, w, b, conv_param):
   x_pad=np.pad(x,conv_param['pad'],'constant')[1:-1,1:-1,:,:]
   f,c,kh,kw=w.shape
   n,c,H,W=x_pad.shape
+  if ((H-kh)/float(conv_param['stride'])-int((H-kh)/float(conv_param['stride'])))>0:
+    print "can't get integer conv output"
   new_h,new_w=int((H-kh)/float(conv_param['stride']))+1,int((W-kw)/float(conv_param['stride']))+1
   w_matrix=w.reshape(-1,c*kh*kw)
   out=np.zeros([n,f,new_h,new_w])
@@ -441,7 +443,7 @@ def conv_backward_naive(dout, cache):
       dx[:,:,i*conv_param['stride']:i*conv_param['stride']+kh,j*conv_param['stride']:j*conv_param['stride']+kw]+=dx_tmp
       dw+=np.dot(x_n,dout_tmp)
       db+=np.sum(dout_tmp,axis=0)
-  dw=dw.reshape(-1,c,kh,kw)
+  dw=dw.T.reshape(-1,c,kh,kw)
   dx=dx[:,:,1:-1,1:-1]
   # dw=np.transpose(dw,(3,0,1,2))
 
@@ -474,7 +476,23 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
-  pass
+  x_pad=np.pad(x,1,'constant')[1:-1,1:1,:,:]
+  kh,kw=pool_param['pool_height'],pool_param['pool_width']
+  stride=pool_param['stride']
+  N,C,H,W=x.shape
+  if ((H-kh)/stride>int((H-kh)/stride)):
+    print "stride and the kh is not match"
+  nh,nw=(H-kh)/stride+1,(W-kw)/stride+1
+  out=np.ones([N,C,nh,nw])
+  for i in range(nh):
+    for j in range(nw):
+      tmp=x[:,:,i*stride:i*stride+stride,j*stride:j*stride+stride]
+      x_col=tmp.reshape(N*C,-1)
+      tmp=np.max(x_col,keepdims=True,axis=1)
+      out[:,:,i,j]=tmp.reshape(N,C)
+
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
