@@ -47,7 +47,14 @@ class ThreeLayerConvNet(object):
     # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
     # of the output affine layer.                                              #
     ############################################################################
-    pass
+    C,H,W=input_dim
+    self.params['W1']=np.random.randn(num_filters,C,filter_size,filter_size)*weight_scale
+    self.params['b1']=np.zeros(num_filters)
+    self.params['W2']=np.random.randn(num_filters*((H/2)**2),hidden_dim)*weight_scale
+    self.params['b2']=np.zeros(hidden_dim)
+    self.params['W3']=np.random.randn(hidden_dim,num_classes)*weight_scale
+    self.params['b3']=np.zeros(num_classes)
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -79,7 +86,10 @@ class ThreeLayerConvNet(object):
     # computing the class scores for X and storing them in the scores          #
     # variable.                                                                #
     ############################################################################
-    pass
+    x1,cache_x1=conv_relu_pool_forward(X,W1,b1,conv_param,pool_param)
+    x2,cache_x2=affine_relu_forward(x1,W2,b2)
+    x3,cache_x3=affine_forward(x2,W3,b3)
+    scores=x3
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -94,7 +104,25 @@ class ThreeLayerConvNet(object):
     # data loss using softmax, and make sure that grads[k] holds the gradients #
     # for self.params[k]. Don't forget to add L2 regularization!               #
     ############################################################################
-    pass
+    loss,dx=softmax_loss(x3,y)
+    loss=loss+0.5*self.reg*(np.sum(W1**2)+np.sum(W2**2)+np.sum(W3**2))
+    dx,dw3,db3=affine_backward(dx,cache_x3)
+    dx,dw2,db2=affine_relu_backward(dx,cache_x2)
+    _,dw1,db1=conv_relu_pool_backward(dx,cache_x1)
+    dw1+=self.reg*dw1
+    dw2+=self.reg*dw2
+    dw3+=self.reg*dw3
+    grads['W1'],grads['b1']=dw1,db1
+    grads['W2'],grads['b2']=dw2,db2
+    grads['W3'],grads['b3']=dw3,db3
+
+
+
+
+
+
+
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################

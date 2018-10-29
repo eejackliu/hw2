@@ -511,15 +511,35 @@ def max_pool_backward_naive(dout, cache):
   Returns:
   - dx: Gradient with respect to x
   """
+
+
   dx = None
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
-  pass
+  x,pool_param=cache
+  dx=np.zeros(x.shape)
+  N,C,nh,nw=dout.shape
+  kh,kw=pool_param['pool_height'],pool_param['pool_width']
+  stride=pool_param['stride']
+  for i in range(nh):
+    for j in range(nw):
+      dout_col=dout[:,:,i,j]
+      dout_col=dout_col.reshape(N*C,-1)
+      x_tmp=x[:,:,i*stride:i*stride+kh,j*stride:j*stride+kw]
+      x_tmp=x_tmp.reshape(N*C,-1)
+      tmp=np.zeros([N*C,kw*kh])
+      x_forward=np.max(x_tmp,axis=1,keepdims=True)
+      dx_col=np.where(x_tmp==x_forward,dout_col,tmp)
+      dx_part=np.reshape(dx_col,[N,C,kh,kw])
+      dx[:,:,i*stride:i*stride+kh,j*stride:j*stride+kw]+=dx_part
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
   return dx
+
 
 
 def spatial_batchnorm_forward(x, gamma, beta, bn_param):
@@ -553,7 +573,17 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
   # version of batch normalization defined above. Your implementation should  #
   # be very short; ours is less than five lines.                              #
   #############################################################################
-  pass
+  if bn_param['mode']=='train':
+    mean=np.mean(x,axis=(0,2,3),keepdims=True)
+    var=np.var(x,axis=(0,2,3),keepdims=True)
+    out=(x-mean)/(np.sqrt(var)+bn_param['eps'])
+    out=out*gamma.reshape(mean.shape)+beta.reshape(mean.shape)
+    bn_param['running_mean']=bn_param['running_mean']*bn_param['momentum']+mean*bn_param['momentum']
+    bn_param['running_var']=bn_param['running_var']*bn_param['momentum']+var*bn_param['momentum']
+  else:
+    mean,var=bn_param['running_mean'],bn_param['running_var']
+    out=(x-mean)/(np.sqrt(var)+bn_param['eps'])
+    out=out*gamma.reshape(mean.shape)+beta.reshape(mean.shape)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
