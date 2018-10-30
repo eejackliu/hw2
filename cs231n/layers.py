@@ -576,10 +576,12 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
   if bn_param['mode']=='train':
     mean=np.mean(x,axis=(0,2,3),keepdims=True)
     var=np.var(x,axis=(0,2,3),keepdims=True)
-    out=(x-mean)/(np.sqrt(var)+bn_param['eps'])
-    out=out*gamma.reshape(mean.shape)+beta.reshape(mean.shape)
-    bn_param['running_mean']=bn_param['running_mean']*bn_param['momentum']+mean*bn_param['momentum']
-    bn_param['running_var']=bn_param['running_var']*bn_param['momentum']+var*bn_param['momentum']
+    out_tmp=(x-mean)/(np.sqrt(var))
+    out=out_tmp*gamma.reshape(mean.shape)+beta.reshape(mean.shape)
+    bn_param['running_mean']=bn_param['running_mean']*bn_param['momentum']+mean*(1-bn_param['momentum'])
+    bn_param['running_var']=bn_param['running_var']*bn_param['momentum']+var*(1-bn_param['momentum'])
+    cache=(x,out_tmp,gamma,beta,bn_param,mean,var+bn_param['eps'])
+
   else:
     mean,var=bn_param['running_mean'],bn_param['running_var']
     out=(x-mean)/(np.sqrt(var)+bn_param['eps'])
@@ -613,11 +615,22 @@ def spatial_batchnorm_backward(dout, cache):
   # version of batch normalization defined above. Your implementation should  #
   # be very short; ours is less than five lines.                              #
   #############################################################################
-  pass
+  x,x_head,gamma,beta,bn_param,mean,var=cache
+  dgamma=np.sum(dout*x_head,axis=(0,2,3))
+  dbeta=np.sum(dout,axis=(0,2,3))
+  N,C,H,W=dout.shape
+  gamma=gamma.reshape(mean.shape)
+  t1=dout*gamma*N*H*W
+  t2=np.sum(dout*gamma,axis=(0,2,3),keepdims=True)
+  t3=x_head*np.sum(dout*gamma*x_head,axis=(0,2,3),keepdims=True)
+  dx=(t1-t2-t3)*(1./(N*H*W))*(1./np.sqrt(var))
+
+
+  # dx=(x.shape[0]*dout*gamma-np.sum(dout*gamma,axis=0)-x*np.sum(dout*gamma*x,axis=0))*(1./x.shape[0]*(1./np.sqrt(var)))
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
-
   return dx, dgamma, dbeta
   
 

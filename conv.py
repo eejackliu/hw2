@@ -267,86 +267,86 @@ print 'Testing conv_relu:'
 print 'dx error: ', rel_error(dx_num, dx)
 print 'dw error: ', rel_error(dw_num, dw)
 print 'db error: ', rel_error(db_num, db)
-# #%%
-# model = ThreeLayerConvNet()
-#
-# N = 50
-# X = np.random.randn(N, 3, 32, 32)
-# y = np.random.randint(10, size=N)
-#
-# loss, grads = model.loss(X, y)
-# print 'Initial loss (no regularization): ', loss
-#
-# model.reg = 0.5
-# loss, grads = model.loss(X, y)
-# print 'Initial loss (with regularization): ', loss
-# #%%
-# num_inputs = 2
-# input_dim = (3, 16, 16)
-# reg = 0.0
-# num_classes = 10
-# X = np.random.randn(num_inputs, *input_dim)
-# y = np.random.randint(num_classes, size=num_inputs)
-#
-# model = ThreeLayerConvNet(num_filters=3, filter_size=3,
-#                           input_dim=input_dim, hidden_dim=7,
-#                           dtype=np.float64)
-# loss, grads = model.loss(X, y)
-# for param_name in sorted(grads):
-#     f = lambda _: model.loss(X, y)[0]
-#     param_grad_num = eval_numerical_gradient(f, model.params[param_name], verbose=False, h=1e-6)
-#     e = rel_error(param_grad_num, grads[param_name])
-#     print '%s max relative error: %e' % (param_name, rel_error(param_grad_num, grads[param_name]))
-# #%%
-# num_train = 100
-# small_data = {
-#   'X_train': data['X_train'][:num_train],
-#   'y_train': data['y_train'][:num_train],
-#   'X_val': data['X_val'],
-#   'y_val': data['y_val'],
-# }
-#
-# model = ThreeLayerConvNet(weight_scale=1e-3)
-#
-# solver = Solver(model, small_data,
-#                 num_epochs=10, batch_size=50,
-#                 update_rule='adam',
-#                 optim_config={
-#                   'learning_rate': 1e-4,
-#                 },
-#                 verbose=True, print_every=1)
-# solver.train()
-# plt.subplot(2, 1, 1)
-# plt.plot(solver.loss_history, 'o')
-# plt.xlabel('iteration')
-# plt.ylabel('loss')
-#
-# plt.subplot(2, 1, 2)
-# plt.plot(solver.train_acc_history, '-o')
-# plt.plot(solver.val_acc_history, '-o')
-# plt.legend(['train', 'val'], loc='upper left')
-# plt.xlabel('epoch')
-# plt.ylabel('accuracy')
-# plt.show()
-# #%%
-# model = ThreeLayerConvNet(weight_scale=0.001, hidden_dim=500, reg=0.001)
-#
-# solver = Solver(model, data,
-#                 num_epochs=1, batch_size=50,
-#                 update_rule='adam',
-#                 optim_config={
-#                   'learning_rate': 1e-4,
-#                 },
-#                 verbose=True, print_every=20)
-# solver.train()
-# #%%
-# from cs231n.vis_utils import visualize_grid
-#
-# grid = visualize_grid(model.params['W1'].transpose(0, 2, 3, 1))
-# plt.imshow(grid.astype('uint8'))
-# plt.axis('off')
-# plt.gcf().set_size_inches(5, 5)
-# plt.show()
+#%%
+model = ThreeLayerConvNet()
+
+N = 50
+X = np.random.randn(N, 3, 32, 32)
+y = np.random.randint(10, size=N)
+
+loss, grads = model.loss(X, y)
+print 'Initial loss (no regularization): ', loss
+
+model.reg = 0.5
+loss, grads = model.loss(X, y)
+print 'Initial loss (with regularization): ', loss
+#%%
+num_inputs = 2
+input_dim = (3, 16, 16)
+reg = 0.0
+num_classes = 10
+X = np.random.randn(num_inputs, *input_dim)
+y = np.random.randint(num_classes, size=num_inputs)
+
+model = ThreeLayerConvNet(num_filters=3, filter_size=3,
+                          input_dim=input_dim, hidden_dim=7,
+                          dtype=np.float64)
+loss, grads = model.loss(X, y)
+for param_name in sorted(grads):
+    f = lambda _: model.loss(X, y)[0]
+    param_grad_num = eval_numerical_gradient(f, model.params[param_name], verbose=False, h=1e-6)
+    e = rel_error(param_grad_num, grads[param_name])
+    print '%s max relative error: %e' % (param_name, rel_error(param_grad_num, grads[param_name]))
+#%%
+num_train = 100
+small_data = {
+  'X_train': data['X_train'][:num_train],
+  'y_train': data['y_train'][:num_train],
+  'X_val': data['X_val'],
+  'y_val': data['y_val'],
+}
+
+model = ThreeLayerConvNet(weight_scale=1e-3)
+
+solver = Solver(model, small_data,
+                num_epochs=10, batch_size=50,
+                update_rule='adam',
+                optim_config={
+                  'learning_rate': 1e-4,
+                },
+                verbose=True, print_every=1)
+solver.train()
+plt.subplot(2, 1, 1)
+plt.plot(solver.loss_history, 'o')
+plt.xlabel('iteration')
+plt.ylabel('loss')
+
+plt.subplot(2, 1, 2)
+plt.plot(solver.train_acc_history, '-o')
+plt.plot(solver.val_acc_history, '-o')
+plt.legend(['train', 'val'], loc='upper left')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.show()
+#%%
+model = ThreeLayerConvNet(weight_scale=0.001, hidden_dim=500, reg=0.001)
+
+solver = Solver(model, data,
+                num_epochs=1, batch_size=50,
+                update_rule='adam',
+                optim_config={
+                  'learning_rate': 1e-4,
+                },
+                verbose=True, print_every=20)
+solver.train()
+#%%
+from cs231n.vis_utils import visualize_grid
+
+grid = visualize_grid(model.params['W1'].transpose(0, 2, 3, 1))
+plt.imshow(grid.astype('uint8'))
+plt.axis('off')
+plt.gcf().set_size_inches(5, 5)
+plt.show()
 #%%
 # Check the training-time forward pass by checking means and variances
 # of features both before and after spatial batch normalization
@@ -375,3 +375,45 @@ print 'After spatial batch normalization (nontrivial gamma, beta):'
 print '  Shape: ', out.shape
 print '  Means: ', out.mean(axis=(0, 2, 3))
 print '  Stds: ', out.std(axis=(0, 2, 3))
+#%%
+
+N, C, H, W = 10, 4, 11, 12
+bn_param = {'mode': 'train','eps':1e-6,'momentum':0.9,'running_mean':0,'running_var':0}
+
+
+gamma = np.ones(C)
+beta = np.zeros(C)
+for t in xrange(50):
+  x = 2.3 * np.random.randn(N, C, H, W) + 13
+  spatial_batchnorm_forward(x, gamma, beta, bn_param)
+bn_param['mode'] = 'test'
+x = 2.3 * np.random.randn(N, C, H, W) + 13
+a_norm, _ = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+
+# Means should be close to zero and stds close to one, but will be
+# noisier than training-time forward passes.
+print 'After spatial batch normalization (test-time):'
+print '  means: ', a_norm.mean(axis=(0, 2, 3))
+print '  stds: ', a_norm.std(axis=(0, 2, 3))
+#%%
+N, C, H, W = 2, 3, 4, 5
+x = 5 * np.random.randn(N, C, H, W) + 12
+gamma = np.random.randn(C)
+beta = np.random.randn(C)
+dout = np.random.randn(N, C, H, W)
+bn_param = {'mode': 'train','eps':1e-5,'momentum':0.9,'running_mean':0,'running_var':0}
+
+# bn_param = {'mode': 'train'}
+fx = lambda x: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+fg = lambda a: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+fb = lambda b: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+
+dx_num = eval_numerical_gradient_array(fx, x, dout)
+da_num = eval_numerical_gradient_array(fg, gamma, dout)
+db_num = eval_numerical_gradient_array(fb, beta, dout)
+
+_, cache = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+dx, dgamma, dbeta = spatial_batchnorm_backward(dout, cache)
+print 'dx error: ', rel_error(dx_num, dx)
+print 'dgamma error: ', rel_error(da_num, dgamma)
+print 'dbeta error: ', rel_error(db_num, dbeta)
