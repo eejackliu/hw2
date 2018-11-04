@@ -24,17 +24,18 @@ transform = T.Compose([
 # iterates through the Dataset and forms minibatches. We divide the CIFAR-10
 # training set into train and val sets by passing a Sampler object to the
 # DataLoader telling how it should sample from the underlying Dataset.
-cifar10_train = dset.CIFAR10('./cs231n/datasets', train=True, download=True,
+cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                              transform=transform)
 loader_train = DataLoader(cifar10_train, batch_size=64,
                           sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN)))
 
-cifar10_val = dset.CIFAR10('./cs231n/datasets', train=True, download=True,
+#
+cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                            transform=transform)
 loader_val = DataLoader(cifar10_val, batch_size=64,
                         sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN, 50000)))
 
-cifar10_test = dset.CIFAR10('./cs231n/datasets', train=False, download=True,
+cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
                             transform=transform)
 loader_test = DataLoader(cifar10_test, batch_size=64)
 #%%
@@ -479,10 +480,15 @@ model=nn.Sequential(
     Flatten(),
     nn.Linear(channel_2*32*32,10)
 )
-model.a
+# for i in model.parameters():
+    # nn.init.kaiming_normal_(i)
+for i in model.modules():
+    if isinstance(i,nn.Conv2d):
+        i.weight=nn.Parameter(random_weight(i.weight.shape))
+        i.bias=nn.Parameter(zero_weight(i.bias.shape))
 optimizer=optim.SGD(model.parameters(),lr=learning_rate,momentum=0.9)
 ################################################################################
 #                                 END OF YOUR CODE
 ################################################################################
-
+torch.nn.Parameter
 train_part34(model, optimizer)
