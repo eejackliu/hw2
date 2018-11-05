@@ -24,18 +24,24 @@ transform = T.Compose([
 # iterates through the Dataset and forms minibatches. We divide the CIFAR-10
 # training set into train and val sets by passing a Sampler object to the
 # DataLoader telling how it should sample from the underlying Dataset.
-cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
+# cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
+                             # transform=transform)
+cifar10_train = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
                              transform=transform)
 loader_train = DataLoader(cifar10_train, batch_size=64,
                           sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN)))
 
 #
-cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
+# cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
+#                            transform=transform)
+cifar10_val = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
                            transform=transform)
 loader_val = DataLoader(cifar10_val, batch_size=64,
                         sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN, 50000)))
 
-cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
+# cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
+#                             transform=transform)
+cifar10_test = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=False, download=True,
                             transform=transform)
 loader_test = DataLoader(cifar10_test, batch_size=64)
 #%%
@@ -490,5 +496,89 @@ optimizer=optim.SGD(model.parameters(),lr=learning_rate,momentum=0.9)
 ################################################################################
 #                                 END OF YOUR CODE
 ################################################################################
-torch.nn.Parameter
 train_part34(model, optimizer)
+#%%
+class my_conv(nn.Module):
+    def __init__(self,d_in,dout):
+        super(my_conv,self).__init__()
+        f1,f2,f3,f4=16,32,64,128
+        self.conv1=nn.Conv2d(d_in,f1,3,padding=1)
+        self.b1=nn.BatchNorm2d(f2)
+        self.conv2=nn.Conv2d(f1,f2,3,padding=1)
+        self.b2=nn.BatchNorm2d(f4)
+        self.conv3=nn.Conv2d(f2,f3,3,padding=1)
+        self.b3=nn.BatchNorm2d(f3)
+        self.conv4=nn.Conv2d(f3,f4,3,padding=1)
+        self.fc1=nn.Linear(f3*4*4,100)
+        self.fc2=nn.Linear(100,dout)
+        self.average_pool=nn.AvgPool2d(8)
+        self.fc=nn.Linear(128,10)
+    def forward(self, x):
+        # x1=F.max_pool2d(F.relu(self.b1(self.conv1(x))),2)
+        # x2=F.max_pool2d(F.relu(self.b2(self.conv2(x1))),2)
+        # x3=F.max_pool2d(F.relu(self.b3(self.conv3(x2))),2)
+        x1=self.b1(F.relu(self.conv2(F.relu(self.conv1(x)))))
+        x1=F.max_pool2d(x1,2)
+        x2=self.b2(F.relu(self.conv4(F.relu(self.conv3(x1)))))
+        x2=F.max_pool2d(x2,2)
+        x=self.average_pool(x2)
+        x=self.fc(x.view(-1,np.prod(x.shape[1:])))
+        # x=self.fc1(x3.view(-1,np.prod(x3.shape[1:])))
+        # x=self.fc2(x)
+        return x
+def my_test(model):
+    model=model.to(device)
+    tmp=torch.zeros(5,3,32,32).to(device)
+    out=model(tmp)
+    print out.size()
+def my_train(mode,data_loader,lr=1e-3,num_epoch=10):
+    print_every=500
+    model=mode.to(device)
+    optimizer=optim.Adam(model.parameters(),lr=lr)
+    for i in xrange(num_epoch):
+        for j,(x,y) in enumerate(data_loader):
+            x=x.to(device)
+            y=y.to(device)
+            out=model(x)
+            loss=F.cross_entropy(out,y)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            if j%print_every==0:
+                print "iterantion {}, loss is{}".format(j,loss.item())
+                check_accuracy_part34(loader_train,model)
+                check_accuracy_part34(loader_val,model)
+
+my_train(my_conv(3,10),loader_train)
+#%%
+m1=nn.Sequential(
+    nn.Conv2d(3,16,3,padding=1),
+    nn.ReLU(),
+    nn.Conv2d(16,32,3,padding=1),
+    nn.ReLU(),
+    nn.MaxPool2d(4),
+    Flatten(),
+
+)
+m2=nn.Sequential(
+    m1,
+    nn.Linear(2048,10)
+)
+class test(nn.Module):
+    def __init__(self):
+        super(test,self).__init__()
+        self.conv1=m1.modules
+
+        self.fc=nn.Linear(2048,10)
+    def forward(self, xx):
+        return self.fc(self.conv1(xx))
+abc=nn.Sequential(
+    m1(),
+    test(),
+)
+
+m3=test()
+m3.to(device)
+tmp=torch.zeros(5,3,32,32).to(device)
+out=m3(tmp)
+print out.size()
