@@ -24,25 +24,25 @@ transform = T.Compose([
 # iterates through the Dataset and forms minibatches. We divide the CIFAR-10
 # training set into train and val sets by passing a Sampler object to the
 # DataLoader telling how it should sample from the underlying Dataset.
-# cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
-                             # transform=transform)
-cifar10_train = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
+cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                              transform=transform)
+# cifar10_train = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
+#                              transform=transform)
 loader_train = DataLoader(cifar10_train, batch_size=64,
                           sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN)))
 
 #
-# cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
-#                            transform=transform)
-cifar10_val = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
+cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                            transform=transform)
+# cifar10_val = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
+#                            transform=transform)
 loader_val = DataLoader(cifar10_val, batch_size=64,
                         sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN, 50000)))
 
-# cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
-#                             transform=transform)
-cifar10_test = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=False, download=True,
+cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
                             transform=transform)
+# cifar10_test = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=False, download=True,
+#                             transform=transform)
 loader_test = DataLoader(cifar10_test, batch_size=64)
 #%%
 USE_GPU = True
@@ -530,12 +530,12 @@ def my_test(model):
     model=model.to(device)
     tmp=torch.zeros(5,3,32,32).to(device)
     out=model(tmp)
-    print out.size()
+    print (out.size())
 def my_train(mode,data_loader,lr=1e-3,num_epoch=10):
     print_every=500
     model=mode.to(device)
     optimizer=optim.Adam(model.parameters(),lr=lr)
-    for i in xrange(num_epoch):
+    for i in range(num_epoch):
         for j,(x,y) in enumerate(data_loader):
             x=x.to(device)
             y=y.to(device)
@@ -545,7 +545,7 @@ def my_train(mode,data_loader,lr=1e-3,num_epoch=10):
             loss.backward()
             optimizer.step()
             if j%print_every==0:
-                print "iterantion {}, loss is{}".format(j,loss.item())
+                print ("iterantion {}, loss is{}".format(j,loss.item()))
                 check_accuracy_part34(loader_train,model)
                 check_accuracy_part34(loader_val,model)
 
@@ -567,18 +567,28 @@ m2=nn.Sequential(
 class test(nn.Module):
     def __init__(self):
         super(test,self).__init__()
-        self.conv1=m1.modules
 
         self.fc=nn.Linear(2048,10)
     def forward(self, xx):
-        return self.fc(self.conv1(xx))
+        return self.fc(xx)
 abc=nn.Sequential(
-    m1(),
+    m1,
     test(),
 )
 
-m3=test()
+m3=abc
 m3.to(device)
 tmp=torch.zeros(5,3,32,32).to(device)
 out=m3(tmp)
-print out.size()
+print (out.size())
+#%%
+class test(nn.Module):
+    def __init__(self):
+        super(test,self).__init__()
+        self.conv=m1
+        self.fc=nn.Linear(2048,10)
+    def forward(self, xx):
+        return self.fc(self.conv(xx))
+mm=test().to(device)
+out=mm(tmp)
+print(out.size())
