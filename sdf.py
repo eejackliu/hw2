@@ -26,22 +26,18 @@ transform = T.Compose([
 # DataLoader telling how it should sample from the underlying Dataset.
 cifar10_train = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                              transform=transform)
-# cifar10_train = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
-#                              transform=transform)
 loader_train = DataLoader(cifar10_train, batch_size=64,
                           sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN)))
 
 #
 cifar10_val = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=True, download=True,
                            transform=transform)
-# cifar10_val = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=True, download=True,
 #                            transform=transform)
 loader_val = DataLoader(cifar10_val, batch_size=64,
                         sampler=sampler.SubsetRandomSampler(range(NUM_TRAIN, 50000)))
 
 cifar10_test = dset.CIFAR10('/home/llm/PycharmProjects/my1/cs231n/datasets/', train=False, download=True,
                             transform=transform)
-# cifar10_test = dset.CIFAR10('/home/local/SPREADTRUM/gary.liu/Documents/cs231/my1/cs231n/datasets', train=False, download=True,
 #                             transform=transform)
 loader_test = DataLoader(cifar10_test, batch_size=64)
 #%%
